@@ -38,35 +38,35 @@ Heap {
         0 => neha_object,    // key 0 = address 0x234
         1 => tiya_object,    // key 1 = address 0x454
         2 => brianna_object,  // key 2 = address 0x433
-    },
-    next_id: 3,
-}
-```
+        },
+        next_id: 3,
+        }
 
-# visualisation
-```
-STACK                    HEAP
-─────────────────        ──────────────────────────────────
-a = 1    ───────────────→  id=1  (neha, size=32, children=[0])
-b = 0    ───────────────→  id=0  (tiya, size=16, children=[])
+        # visualisation
+        ```
+        STACK                    HEAP
+        ─────────────────        ──────────────────────────────────
+        a = 1    ───────────────→  id=1  (neha, size=32, children=[0])
+        b = 0    ───────────────→  id=0  (tiya, size=16, children=[])
                            id=2  (brianna, size=8, children=[])  ← garbage
-```
+        ```
 
-# What are a and b in your Rust code?
-They are your roots array. When you call:
-```
-rustgc.collect(&[0, 1])
-```
-That 0 is a (pointing to neha). That 1 is b (pointing to tiya). You're telling the GC — "these are the stack variables that are currently alive. Start from here."
-brianna has id 2. Nobody put 2 in the roots list — because c went out of scope. So the GC can't reach her. She's garbage.
+        # What are a and b in your Rust code?
+        They are your roots array. When you call:
+        ```
+        rustgc.collect(&[0, 1])
+        ```
+        That 0 is a (pointing to neha). That 1 is b (pointing to tiya). You're telling the GC — "these are the stack variables that are currently alive. Start from here."
+        brianna has id 2. Nobody put 2 in the roots list — because c went out of scope. So the GC can't reach her. She's garbage.
 
-# How does get and delete work?
-```
-// GET — follow the pointer (dereference *0x234)
-let neha = heap.objects.get(&0);
+        # How does get and delete work?
+        ```
+        // GET — follow the pointer (dereference *0x234)
+        let neha = heap.objects.get(&0);
 
-// DELETE — GC sweeps unreachable objects
-heap.objects.remove(&2);  // usashi is gone, memory reclaimed
+        // DELETE — GC sweeps unreachable objects
+        heap.objects.remove(&2);  // brianna is gone, memory reclaimed
+        ```
 ```
 
 # The complete picture in one sentence
