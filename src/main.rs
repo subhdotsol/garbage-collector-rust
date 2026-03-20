@@ -1,11 +1,14 @@
-// // main.rs
-// mod cheney;
-// mod common;
-// mod generational;
-// mod mark_sweep;
+mod common;
+mod mark_sweep;
 // mod ref_count;
+// mod generational;
+// mod cheney;
 // mod tracing;
 
 fn main() {
-    println!("Garbage Collector");
+    println!("Approach 1: Mark and Sweep \n");
+    mark_sweep::demo::run();
+    println!("\n──────────────────────────────────\n");
+
+    // will be implementing more soon
 }
