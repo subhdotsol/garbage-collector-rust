@@ -2,8 +2,9 @@
 // Rust is already a language which manages the memory so it wont let me use the real heap pointers
 // so i am stimulating a heap in safe rust
 
-// this is a raw object node stimulated heap
+use std::collections::HashMap;
 
+// this is a raw object node stimulated heap
 pub struct Object {
     pub id: usize, // You can't use real memory addresses, so IDs are your pointers. When object A references object B, it stores B's id. This is how you simulate a pointer graph without raw pointers.
     pub size: usize, // Simulates that objects take up memory. Lets you track "how much memory is in use" and report meaningful stats.
@@ -31,11 +32,44 @@ pub struct Heap {
     pub next_id: usize,
 }
 
-pub trait GargbageCollector {
+pub trait GarbageCollector {
     fn allocate(&mut self, size: usize, children: Vec<usize>) -> usize;
     fn collect(&mut self, roots: &[usize]) -> usize;
     fn live_objects(&self) -> usize;
 }
 
+// Implementing the Objects and the Heap
 
-/// Implementing the Objects and the Heap
+impl Object {
+    pub fn new(id: usize, size: usize, children: Vec<usize>) -> Self {
+        Self {
+            id,
+            size,
+            children,
+            marked: false,
+            reference_count: 0,
+            generation: 0,
+            forwarding_ptr: None,
+        }
+    }
+}
+
+impl Heap {
+    pub fn new() -> Self {
+        Self {
+            objects: HashMap::new(),
+            next_id: 0,
+        }
+    }
+
+    pub fn allocate(&mut self, size: usize, children: Vec<usize>) -> usize {
+        let id = self.next_id;
+        self.objects.insert(id, Object::new(id, size, children));
+        self.next_id += 1;
+        id
+    }
+
+    pub fn get_object(&self, id: usize) -> Option<&Object> {
+        self.objects.get(&id)
+    }
+}
