@@ -27,53 +27,75 @@ impl MarkSweep {
 
         // Walk the object graph — keep following children until nothing left
         while let Some(id) = queue.pop_front() {
-            if let Some(obj) = self.heap.objects.get_mut(&id) {
-                if obj.marked {
-                    // already visited, skip
-                    continue;
+                if let Some(obj) = self.heap.objects.get_mut(&id) {
+                    if obj.marked {
+                        // already visited, skip
+                        continue;
+                    }
+                    // Mark this object as reachable
+                    obj.marked = true;
+                }else{
+                        continue; // object is missing
                 }
-                // Mark this object as reachable
-                obj.marked = true;
 
-                // Collect children ids first (to avoid borrow conflict)
-                let children: Vec<usize> = obj.children.clone();
+                // // Collect children ids first (to avoid borrow conflict)
+                // let children: Vec<usize> = obj.children.clone();
 
-                // Push all children into the queue to visit next
-                for child_id in children {
-                    if let Some(child) = self.heap.objects.get(&child_id) {
-                        if !child.marked {
-                            queue.push_back(child_id);
+                // // Push all children into the queue to visit next
+                // for child_id in children {
+                //     if let Some(child) = self.heap.objects.get(&child_id) {
+                //         if !child.marked {
+                //             queue.push_back(child_id);
+                //         }
+                //     }
+                // }
+
+                // Second lookup .. immutable borrow
+                if let Some(obj) = self.heap.objects.get(&id) {
+                    for &child_id in &obj.children {
+                        if let Some(child) = self.heap.objects.get(&child_id) {
+                            if !child.marked {
+                                queue.push_back(child_id);
+                            }
                         }
                     }
                 }
+
             }
         }
-    }
+    
 
     // PHASE 2 — SWEEP
     // Walk every object in the heap — if not marked, it's garbage, delete it
     fn sweep(&mut self) -> usize {
-        let garbage: Vec<usize> = self
-            .heap
-            .objects
-            .values()
-            .filter(|obj| !obj.marked)
-            .map(|obj| obj.id)
-            .collect();
+        // let garbage: Vec<usize> = self
+        //     .heap
+        //     .objects
+        //     .values()
+        //     .filter(|obj| !obj.marked)
+        //     .map(|obj| obj.id)
+        //     .collect();
+        let initial_count = self.heap.objects.len();
 
-        let removed_count = garbage.len();
-        for id in &garbage {
-            self.heap.objects.remove(id);
-        }
+        self.heap.objects.retain(|_, obj| {
+            let alive = obj.marked;
+            obj.marked=false;
+            alive
+        });
+         let removed_count = initial_count - self.heap.objects.len();
+        // for id in &garbage {
+        //     self.heap.objects.remove(id);
+        // }
 
         println!("  [sweep] removed {} unreachable objects", removed_count);
 
         // Reset marks on surviving objects for the next cycle
-        for obj in self.heap.objects.values_mut() {
-            obj.marked = false;
-        }
-        removed_count
-    }
+        // for obj in self.heap.objects.values_mut() {
+        //     obj.marked = false;
+        // }
+         removed_count
+    
+}
 }
 
 impl GarbageCollector for MarkSweep {
